@@ -5,3 +5,4 @@
 /test.php
 /tests/test*
 /vendor/
+/src/utilphp/*-tmp

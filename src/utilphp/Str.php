@@ -1,6 +1,6 @@
 <?php
 
-namespace utilphp\util;
+namespace utilphp;
 
 /**
  * util.php
@@ -300,7 +300,11 @@ class util
         'information',
         'equipment',
         'vermin',
-        'canine'
+        'canine',
+        'sheep',
+        'corn',
+        'cake',
+        'cabbage'
     );
 
 
@@ -2225,610 +2229,65 @@ class util
         return rtrim($matches[0]).$append;
     }
 
-    /**
-     * Returns the ordinal version of a number (appends th, st, nd, rd).
-     *
-     * @param  string $number The number to append an ordinal suffix to
-     * @return string
-     */
-    public static function ordinal($number)
+
+    public static function pluralize( $string ) 
     {
-        $test_c = abs($number) % 10;
-        $ext = ((abs($number) % 100 < 21 && abs($number) % 100 > 4) ? 'th' : (($test_c < 4) ? ($test_c < 3) ? ($test_c < 2) ? ($test_c < 1) ? 'th' : 'st' : 'nd' : 'rd' : 'th'));
-
-        return $number . $ext;
+        // save some time in the case that singular and plural are the same
+        if ( in_array( strtolower( $string ), self::$uncountable ) )
+            return $string;
+            
+    
+        // check for irregular singular forms
+        foreach ( self::$irregular as $pattern => $result )
+        {
+            $pattern = '/' . $pattern . '$/i';
+            
+            if ( preg_match( $pattern, $string ) )
+                return preg_replace( $pattern, $result, $string);
+        }
+        
+        // check for matches using regular expressions
+        foreach ( self::$plural as $pattern => $result )
+        {
+            if ( preg_match( $pattern, $string ) )
+                return preg_replace( $pattern, $result, $string );
+        }
+        
+        return $string;
     }
-
-    /**
-     * Returns the file permissions as a nice string, like -rw-r--r-- or false
-     * if the file is not found.
-     *
-     * @param   string $file The name of the file to get permissions form
-     * @param   int $perms Numerical value of permissions to display as text.
-     * @return  string
-     */
-    public static function full_permissions($file, $perms = null)
+    
+    public static function singularize( $string )
     {
-        if (is_null($perms)) {
-            if (!file_exists($file)) {
-                return false;
-            }
-            $perms = fileperms($file);
+        // save some time in the case that singular and plural are the same
+        if ( in_array( strtolower( $string ), self::$uncountable ) )
+            return $string;
+
+        // check for irregular plural forms
+        foreach ( self::$irregular as $result => $pattern )
+        {
+            $pattern = '/' . $pattern . '$/i';
+            
+            if ( preg_match( $pattern, $string ) )
+                return preg_replace( $pattern, $result, $string);
         }
-
-        if (($perms & 0xC000) == 0xC000) {
-            // Socket
-            $info = 's';
-        } elseif (($perms & 0xA000) == 0xA000) {
-            // Symbolic Link
-            $info = 'l';
-        } elseif (($perms & 0x8000) == 0x8000) {
-            // Regular
-            $info = '-';
-        } elseif (($perms & 0x6000) == 0x6000) {
-            // Block special
-            $info = 'b';
-        } elseif (($perms & 0x4000) == 0x4000) {
-            // Directory
-            $info = 'd';
-        } elseif (($perms & 0x2000) == 0x2000) {
-            // Character special
-            $info = 'c';
-        } elseif (($perms & 0x1000) == 0x1000) {
-            // FIFO pipe
-            $info = 'p';
-        } else {
-            // Unknown
-            $info = 'u';
+        
+        // check for matches using regular expressions
+        foreach ( self::$singular as $pattern => $result )
+        {
+            if ( preg_match( $pattern, $string ) )
+                return preg_replace( $pattern, $result, $string );
         }
-
-        // Owner
-        $info .= (($perms & 0x0100) ? 'r' : '-');
-        $info .= (($perms & 0x0080) ? 'w' : '-');
-        $info .= (($perms & 0x0040) ?
-                    (($perms & 0x0800) ? 's' : 'x') :
-                    (($perms & 0x0800) ? 'S' : '-'));
-
-        // Group
-        $info .= (($perms & 0x0020) ? 'r' : '-');
-        $info .= (($perms & 0x0010) ? 'w' : '-');
-        $info .= (($perms & 0x0008) ?
-                    (($perms & 0x0400) ? 's' : 'x') :
-                    (($perms & 0x0400) ? 'S' : '-'));
-
-        // World
-        $info .= (($perms & 0x0004) ? 'r' : '-');
-        $info .= (($perms & 0x0002) ? 'w' : '-');
-        $info .= (($perms & 0x0001) ?
-                    (($perms & 0x0200) ? 't' : 'x') :
-                    (($perms & 0x0200) ? 'T' : '-'));
-
-        return $info;
+        
+        return $string;
     }
-
-    /**
-     * Returns the first element in an array.
-     *
-     * @param  array $array
-     * @return mixed
-     */
-    public static function array_first(array $array)
+    
+    public static function pluralize_if($count, $string)
     {
-        return reset($array);
-    }
-
-    /**
-     * Returns the last element in an array.
-     *
-     * @param  array $array
-     * @return mixed
-     */
-    public static function array_last(array $array)
-    {
-        return end($array);
-    }
-
-    /**
-     * Returns the first key in an array.
-     *
-     * @param  array $array
-     * @return int|string
-     */
-    public static function array_first_key(array $array)
-    {
-        reset($array);
-
-        return key($array);
-    }
-
-    /**
-     * Returns the last key in an array.
-     *
-     * @param  array $array
-     * @return int|string
-     */
-    public static function array_last_key(array $array)
-    {
-        end($array);
-
-        return key($array);
-    }
-
-    /**
-     * Flatten a multi-dimensional array into a one dimensional array.
-     *
-     * Contributed by Theodore R. Smith of PHP Experts, Inc. <http://www.phpexperts.pro/>
-     *
-     * @param  array   $array         The array to flatten
-     * @param  boolean $preserve_keys Whether or not to preserve array keys.
-     *                                Keys from deeply nested arrays will
-     *                                overwrite keys from shallowy nested arrays
-     * @return array
-     */
-    public static function array_flatten(array $array, $preserve_keys = true)
-    {
-        $flattened = array();
-
-        array_walk_recursive($array, function ($value, $key) use (&$flattened, $preserve_keys) {
-            if ($preserve_keys && !is_int($key)) {
-                $flattened[$key] = $value;
-            } else {
-                $flattened[] = $value;
-            }
-        });
-
-        return $flattened;
-    }
-
-    /**
-     * Accepts an array, and returns an array of values from that array as
-     * specified by $field. For example, if the array is full of objects
-     * and you call util::array_pluck($array, 'name'), the function will
-     * return an array of values from $array[]->name.
-     *
-     * @param  array   $array            An array
-     * @param  string  $field            The field to get values from
-     * @param  boolean $preserve_keys    Whether or not to preserve the
-     *                                   array keys
-     * @param  boolean $remove_nomatches If the field doesn't appear to be set,
-     *                                   remove it from the array
-     * @return array
-     */
-    public static function array_pluck(array $array, $field, $preserve_keys = true, $remove_nomatches = true)
-    {
-        $new_list = array();
-
-        foreach ($array as $key => $value) {
-            if (is_object($value)) {
-                if (isset($value->{$field})) {
-                    if ($preserve_keys) {
-                        $new_list[$key] = $value->{$field};
-                    } else {
-                        $new_list[] = $value->{$field};
-                    }
-                } elseif (!$remove_nomatches) {
-                    $new_list[$key] = $value;
-                }
-            } else {
-                if (isset($value[$field])) {
-                    if ($preserve_keys) {
-                        $new_list[$key] = $value[$field];
-                    } else {
-                        $new_list[] = $value[$field];
-                    }
-                } elseif (!$remove_nomatches) {
-                    $new_list[$key] = $value;
-                }
-            }
-        }
-
-        return $new_list;
-    }
-
-    /**
-     * Searches for a given value in an array of arrays, objects and scalar
-     * values. You can optionally specify a field of the nested arrays and
-     * objects to search in.
-     *
-     * @param  array   $array  The array to search
-     * @param  scalar  $search The value to search for
-     * @param  string  $field  The field to search in, if not specified
-     *                         all fields will be searched
-     * @return boolean|scalar  False on failure or the array key on success
-     */
-    public static function array_search_deep(array $array, $search, $field = false)
-    {
-        // *grumbles* stupid PHP type system
-        $search = (string) $search;
-
-        foreach ($array as $key => $elem) {
-            // *grumbles* stupid PHP type system
-            $key = (string) $key;
-
-            if ($field) {
-                if (is_object($elem) && $elem->{$field} === $search) {
-                    return $key;
-                } elseif (is_array($elem) && $elem[$field] === $search) {
-                    return $key;
-                } elseif (is_scalar($elem) && $elem === $search) {
-                    return $key;
-                }
-            } else {
-                if (is_object($elem)) {
-                    $elem = (array) $elem;
-
-                    if (in_array($search, $elem)) {
-                        return $key;
-                    }
-                } elseif (is_array($elem) && in_array($search, $elem)) {
-                    return $key;
-                } elseif (is_scalar($elem) && $elem === $search) {
-                    return $key;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Returns an array containing all the elements of arr1 after applying
-     * the callback function to each one.
-     *
-     * @param  string  $callback     Callback function to run for each
-     *                               element in each array
-     * @param  array   $array        An array to run through the callback
-     *                               function
-     * @param  boolean $on_nonscalar Whether or not to call the callback
-     *                               function on nonscalar values
-     *                               (Objects, resources, etc)
-     * @return array
-     */
-    public static function array_map_deep(array $array, $callback, $on_nonscalar = false)
-    {
-        foreach ($array as $key => $value) {
-            if (is_array($value)) {
-                $args = array($value, $callback, $on_nonscalar);
-                $array[$key] = call_user_func_array(array(__CLASS__, __FUNCTION__), $args);
-            } elseif (is_scalar($value) || $on_nonscalar) {
-                $array[$key] = call_user_func($callback, $value);
-            }
-        }
-
-        return $array;
-    }
-
-    /**
-     * Merges two arrays recursively and returns the result.
-     *
-     * @param   array   $dest               Destination array
-     * @param   array   $src                Source array
-     * @param   boolean $appendIntegerKeys  Whether to append elements of $src
-     *                                      to $dest if the key is an integer.
-     *                                      This is the default behavior.
-     *                                      Otherwise elements from $src will
-     *                                      overwrite the ones in $dest.
-     * @return  array
-     */
-    public static function array_merge_deep(array $dest, array $src, $appendIntegerKeys = true)
-    {
-        foreach ($src as $key => $value) {
-            if (is_int($key) and $appendIntegerKeys) {
-                $dest[] = $value;
-            } elseif (isset($dest[$key]) and is_array($dest[$key]) and is_array($value)) {
-                $dest[$key] = static::array_merge_deep($dest[$key], $value, $appendIntegerKeys);
-            } else {
-                $dest[$key] = $value;
-            }
-        }
-        return $dest;
+        if ($count == 1)
+            return "1 $string";
+        else
+            return $count . " " . self::pluralize($string);
     }
 
 
-
-
-
-    /**
-     * An improved version of array_merge. Unlike array_merge, which can only merge two arrays at a time, array_merge_multi can merge an unlimited number of arrays.
-     * The input should be an array of arrays
-     * @param array    $array
-     * @return array    Merged array
-     */
-    public static function array_merge_multi($array) {
-
-        $array = array_values($array);
-
-        $new_array = array_merge($array[0], $array[1]);
-
-        for ($i = 2; $i < count($array); $i++) {
-            $new_array = array_merge($new_array, $array[$i]);
-        }
-
-        return $new_array;
-
-    }
-
-
-
-
-    /**
-     * A modified version of array_map which accepts arguments for built in PHP functions.
-     * The position argument, specifies the position that the value from the array should appear in the functions argument list, for example, with the explode(',',array) function, the delimiter appears first, so the value should be the second argument supplied to the function, therefore $position should be set to 2, meaning it will appear as the second argument supplied to array_map.
-     * The recursive option is disabled by default, setting it to true, will cause the function to recursively map multidimensional arrays
-     *
-     *
-     * @param callback $function
-     * @param array    $array
-     * @param array    $args
-     * @param int    $position
-     * @param bool    $recursive
-     * @return array
-     */
-    public static function array_map_args($function, $array, $args, $position = 1, $recursive = false) {
-        $result = array();
-
-        if (!is_array($args)) {$args = array($args);}
-
-        foreach ($array as $key => $value) {
-            $output_args[$key] = $args;
-
-            array_splice($output_args[$key], $position-1, 0, array($value));
-            $output_args[$key] = array_filter($output_args[$key]);
-
-            if (is_array($value) && $recursive) {
-                $result[$key] = array_map_args($function, $value, $output_args[$key]);
-            } else {
-                $result[$key] = call_user_func_array($function, $output_args[$key]);
-            }
-        }
-
-        return $result;
-    }
-
-
-    /**
-     * Converts an object, or any objects in an array into an array
-     *
-     * @param mixed $data
-     * @return bool
-     */
-
-    public static function objectToArray($data) {
-
-        if (is_object($data)) {$results = (array) $data;} elseif (is_array($data)) {
-            foreach ($data as $block) {
-                $results[] = (array) $block;
-            }
-        } else { $results = array($data);}
-
-        return $results;
-    }
-
-
-
-    public static function array_clean(array $array)
-    {
-        return array_filter($array);
-    }
-
-    /**
-     * Wrapper to prevent errors if the user doesn't have the mbstring
-     * extension installed.
-     *
-     * @param  string $encoding
-     * @return string
-     */
-    protected static function mbInternalEncoding($encoding = null)
-    {
-        if (function_exists('mb_internal_encoding')) {
-            return $encoding ? mb_internal_encoding($encoding) : mb_internal_encoding();
-        }
-
-        // @codeCoverageIgnoreStart
-        return 'UTF-8';
-        // @codeCoverageIgnoreEnd
-    }
-
-    /**
-     * Set the writable bit on a file to the minimum value that allows the user
-     * running PHP to write to it.
-     *
-     * @param  string  $filename The filename to set the writable bit on
-     * @param  boolean $writable Whether to make the file writable or not
-     * @return boolean
-     */
-    public static function set_writable($filename, $writable = true)
-    {
-        $stat = @stat($filename);
-
-        if ($stat === false) {
-            return false;
-        }
-
-        // We're on Windows
-        if (strncasecmp(PHP_OS, 'WIN', 3) === 0) {
-            return true;
-        }
-
-        list($myuid, $mygid) = array(posix_geteuid(), posix_getgid());
-
-        if ($writable) {
-            // Set only the user writable bit (file is owned by us)
-            if ($stat['uid'] == $myuid) {
-                return chmod($filename, fileperms($filename) | 0200);
-            }
-
-            // Set only the group writable bit (file group is the same as us)
-            if ($stat['gid'] == $mygid) {
-                return chmod($filename, fileperms($filename) | 0220);
-            }
-
-            // Set the world writable bit (file isn't owned or grouped by us)
-            return chmod($filename, fileperms($filename) | 0222);
-        } else {
-            // Set only the user writable bit (file is owned by us)
-            if ($stat['uid'] == $myuid) {
-                return chmod($filename, (fileperms($filename) | 0222) ^ 0222);
-            }
-
-            // Set only the group writable bit (file group is the same as us)
-            if ($stat['gid'] == $mygid) {
-                return chmod($filename, (fileperms($filename) | 0222) ^ 0022);
-            }
-
-            // Set the world writable bit (file isn't owned or grouped by us)
-            return chmod($filename, (fileperms($filename) | 0222) ^ 0002);
-        }
-    }
-
-    /**
-     * Set the readable bit on a file to the minimum value that allows the user
-     * running PHP to read to it.
-     *
-     * @param  string  $filename The filename to set the readable bit on
-     * @param  boolean $readable Whether to make the file readable or not
-     * @return boolean
-     */
-    public static function set_readable($filename, $readable = true)
-    {
-        $stat = @stat($filename);
-
-        if ($stat === false) {
-            return false;
-        }
-
-        // We're on Windows
-        if (strncasecmp(PHP_OS, 'WIN', 3) === 0) {
-            return true;
-        }
-
-        list($myuid, $mygid) = array(posix_geteuid(), posix_getgid());
-
-        if ($readable) {
-            // Set only the user readable bit (file is owned by us)
-            if ($stat['uid'] == $myuid) {
-                return chmod($filename, fileperms($filename) | 0400);
-            }
-
-            // Set only the group readable bit (file group is the same as us)
-            if ($stat['gid'] == $mygid) {
-                return chmod($filename, fileperms($filename) | 0440);
-            }
-
-            // Set the world readable bit (file isn't owned or grouped by us)
-            return chmod($filename, fileperms($filename) | 0444);
-        } else {
-            // Set only the user readable bit (file is owned by us)
-            if ($stat['uid'] == $myuid) {
-                return chmod($filename, (fileperms($filename) | 0444) ^ 0444);
-            }
-
-            // Set only the group readable bit (file group is the same as us)
-            if ($stat['gid'] == $mygid) {
-                return chmod($filename, (fileperms($filename) | 0444) ^ 0044);
-            }
-
-            // Set the world readable bit (file isn't owned or grouped by us)
-            return chmod($filename, (fileperms($filename) | 0444) ^ 0004);
-        }
-    }
-
-    /**
-     * Set the executable bit on a file to the minimum value that allows the
-     * user running PHP to read to it.
-     *
-     * @param  string  $filename   The filename to set the executable bit on
-     * @param  boolean $executable Whether to make the file executable or not
-     * @return boolean
-     */
-    public static function set_executable($filename, $executable = true)
-    {
-        $stat = @stat($filename);
-
-        if ($stat === false) {
-            return false;
-        }
-
-        // We're on Windows
-        if (strncasecmp(PHP_OS, 'WIN', 3) === 0) {
-            return true;
-        }
-
-        list($myuid, $mygid) = array(posix_geteuid(), posix_getgid());
-
-        if ($executable) {
-            // Set only the user readable bit (file is owned by us)
-            if ($stat['uid'] == $myuid) {
-                return chmod($filename, fileperms($filename) | 0100);
-            }
-
-            // Set only the group readable bit (file group is the same as us)
-            if ($stat['gid'] == $mygid) {
-                return chmod($filename, fileperms($filename) | 0110);
-            }
-
-            // Set the world readable bit (file isn't owned or grouped by us)
-            return chmod($filename, fileperms($filename) | 0111);
-        } else {
-            // Set only the user readable bit (file is owned by us)
-            if ($stat['uid'] == $myuid) {
-                return chmod($filename, (fileperms($filename) | 0111) ^ 0111);
-            }
-
-            // Set only the group readable bit (file group is the same as us)
-            if ($stat['gid'] == $mygid) {
-                return chmod($filename, (fileperms($filename) | 0111) ^ 0011);
-            }
-
-            // Set the world readable bit (file isn't owned or grouped by us)
-            return chmod($filename, (fileperms($filename) | 0111) ^ 0001);
-        }
-    }
-
-    /**
-     * Returns size of a given directory in bytes.
-     *
-     * @param string $dir
-     * @return integer
-     */
-    public static function directory_size($dir)
-    {
-        $size = 0;
-        foreach(new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($dir, \FilesystemIterator::CURRENT_AS_FILEINFO | \FilesystemIterator::SKIP_DOTS)) as $file => $key) {
-            if ($key->isFile()) {
-                $size += $key->getSize();
-            }
-        }
-        return $size;
-    }
-
-    /**
-     * Returns a home directory of current user.
-     *
-     * @return string
-     */
-    public static function get_user_directory()
-    {
-        if (isset($_SERVER['HOMEDRIVE'])) {
-            return $_SERVER['HOMEDRIVE'] . $_SERVER['HOMEPATH'];
-        }
-
-        return $_SERVER['HOME'];
-    }
-
-    /**
-     * Returns all paths inside a directory.
-     *
-     * @param string $dir
-     * @return array
-     */
-    public static function directory_contents($dir)
-    {
-        $contents = array();
-        foreach(new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($dir, \FilesystemIterator::KEY_AS_PATHNAME | \FilesystemIterator::CURRENT_AS_FILEINFO | \FilesystemIterator::SKIP_DOTS)) as $pathname => $fi) {
-            $contents[] = $pathname;
-        }
-        natsort($contents);
-        return $contents;
-    }
 }
